@@ -1,0 +1,436 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #121212;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+    }
+    .login-box, .dashboard {
+      display: none;
+    }
+    .login-box {
+      display: block;
+      background: linear-gradient(135deg, #1f1f1f, #0d0d0d);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 255, 100, 0.2);
+      width: 350px;
+      z-index: 10;
+    }
+    h1 {
+      color: #00cc66;
+      margin-bottom: 20px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: #fff;
+      outline: none;
+      transition: 0.3s;
+    }
+    input:focus {
+      border-color: #00cc66;
+      background-color: #333;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      background-color: #00cc66;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    .btn:hover {
+      background-color: #00e676;
+    }
+    .guest-btn {
+      margin-top: 15px;
+      background-color: transparent;
+      color: #00cc66;
+      border: 1px solid #00cc66;
+    }
+    .guest-btn:hover {
+      background-color: #00cc66;
+      color: #000;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    .dashboard {
+      display: none;
+      flex: 1;
+      width: 100%;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background-color: #1e1e1e;
+      width: 300px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .logo-box {
+      text-align: center;
+      padding: 20px 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #ccc;
+    }
+    .input-section label {
+      display: block;
+      margin: 10px 0 5px;
+      font-size: 14px;
+    }
+    .input-section input[type="number"], .input-section input[type="text"] {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 15px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: #fff;
+      transition: 0.3s ease;
+    }
+    .input-section input:focus {
+      outline: none;
+      border-color: #00cc66;
+      background-color: #333;
+    }
+    .main {
+      flex: 1;
+      padding: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      grid-gap: 30px;
+    }
+    .chart-box {
+      background-color: #1f1f1f;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,255,100,0.1);
+    }
+    .chart-box h3 {
+      margin-bottom: 15px;
+      font-size: 18px;
+      color: #00e676;
+    }
+    .chart-box canvas {
+      width: 100% !important;
+      height: 300px !important;
+    }
+    .history-section {
+      background-color: #2a2a2a;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .history-item {
+      background-color: #333;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .history-item:hover {
+      background-color: #444;
+    }
+    .history-section h3 {
+      color: #00e676;
+      margin-bottom: 15px;
+    }
+    #historyList {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-box" id="loginPage">
+    <img src="https://play-lh.googleusercontent.com/DgWMQBa5HxbvXq8DG8DS0uhRapVx48UlByk7GNYGAqQxe5lYUl7FBsBzu1xRBUaxmA=w240-h480-rw" 
+         alt="Logo" 
+         style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;">
+    <h1>Expense Tracker</h1>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button class="btn" onclick="login()">Login</button>
+    <button class="btn guest-btn" onclick="showDashboard()">Guest Login</button>
+    <div id="errorMsg" class="error"></div>
+  </div>
+
+  <div class="dashboard" id="dashboardPage">
+    <div class="sidebar">
+      <div class="logo-box" style="text-align: center; padding: 20px;">
+        <img src="https://play-lh.googleusercontent.com/DgWMQBa5HxbvXq8DG8DS0uhRapVx48UlByk7GNYGAqQxe5lYUl7FBsBzu1xRBUaxmA=w240-h480-rw" 
+             alt="Logo" 
+             style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: none; box-shadow: none;">
+      </div>
+      <div class="input-section">
+        <label>Number of Individuals</label>
+        <input type="number" id="numIndividuals" min="1" max="5" value="3" onchange="renderForm()">
+        <label>Number of Expense Types</label>
+        <input type="number" id="numTypes" min="1" max="10" value="3" onchange="renderForm()">
+        <div id="dynamicInputs"></div>
+        <button class="btn" onclick="generateChartsFromForm()">Generate Charts</button>
+        <button class="btn guest-btn" onclick="logout()">Logout</button>
+      </div>
+      <div class="history-section">
+        <h3>History</h3>
+        <div id="historyList"></div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="chart-box">
+        <h3>Expenses per Individual</h3>
+        <canvas id="individualChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Amount per Type</h3>
+        <canvas id="typeChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Expenses Overview</h3>
+        <canvas id="stackedChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Average Expense per Type</h3>
+        <canvas id="averageChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+<script>
+let individualChart, typeChart, stackedChart, averageChart;
+
+function login() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value;
+  if (username === "admin" && password === "admin123") {
+    showDashboard();
+  } else {
+    document.getElementById("errorMsg").textContent = "Invalid credentials!";
+  }
+}
+
+function showDashboard() {
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("dashboardPage").style.display = "flex";
+  renderForm();
+  loadHistory();
+}
+
+function logout() {
+  document.getElementById("dashboardPage").style.display = "none";
+  document.getElementById("loginPage").style.display = "block";
+  document.getElementById("username").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("errorMsg").textContent = "";
+}
+
+function renderForm(data = null) {
+  const individuals = data ? data.numIndividuals : parseInt(document.getElementById('numIndividuals').value);
+  const types = data ? data.numTypes : parseInt(document.getElementById('numTypes').value);
+  const container = document.getElementById('dynamicInputs');
+  container.innerHTML = '';
+
+  if (data) {
+    document.getElementById('numIndividuals').value = individuals;
+    document.getElementById('numTypes').value = types;
+  }
+
+  for (let i = 0; i < types; i++) {
+    const row = document.createElement('div');
+    row.innerHTML = `<label>Expense Type ${i + 1}</label><input type='text' id='type-${i}' placeholder='e.g., Food' value='${data && data.types[i] ? data.types[i] : ''}'>`;
+    for (let j = 0; j < individuals; j++) {
+      row.innerHTML += `<label>Individual ${j + 1} Expense</label><input type='number' id='amount-${i}-${j}' placeholder='0' value='${data && data.expenses[i][j] !== undefined ? data.expenses[i][j] : ''}'>`;
+    }
+    container.appendChild(row);
+  }
+}
+
+function saveToHistory() {
+  const individuals = parseInt(document.getElementById('numIndividuals').value);
+  const types = parseInt(document.getElementById('numTypes').value);
+  const expenseTypes = [];
+  const expenses = [];
+
+  for (let i = 0; i < types; i++) {
+    expenseTypes.push(document.getElementById(`type-${i}`).value || `Type ${i + 1}`);
+    expenses[i] = [];
+    for (let j = 0; j < individuals; j++) {
+      expenses[i][j] = parseFloat(document.getElementById(`amount-${i}-${j}`).value) || 0;
+    }
+  }
+
+  const historyEntry = {
+    timestamp: new Date().toLocaleString(),
+    numIndividuals: individuals,
+    numTypes: types,
+    types: expenseTypes,
+    expenses: expenses
+  };
+
+  let history = JSON.parse(localStorage.getItem('expenseHistory')) || [];
+  history.push(historyEntry);
+  localStorage.setItem('expenseHistory', JSON.stringify(history));
+  loadHistory();
+}
+
+function loadHistory() {
+  const historyList = document.getElementById('historyList');
+  historyList.innerHTML = '';
+  const history = JSON.parse(localStorage.getItem('expenseHistory')) || [];
+
+  history.forEach((entry, index) => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.innerHTML = `<strong>${entry.timestamp}</strong><br>Individuals: ${entry.numIndividuals}, Types: ${entry.numTypes}`;
+    item.onclick = () => loadHistoryEntry(index);
+    historyList.appendChild(item);
+  });
+}
+
+function loadHistoryEntry(index) {
+  const history = JSON.parse(localStorage.getItem('expenseHistory')) || [];
+  const entry = history[index];
+  renderForm(entry);
+  generateCharts(entry);
+}
+
+function generateChartsFromForm() {
+  saveToHistory();
+  const individuals = parseInt(document.getElementById('numIndividuals').value);
+  const types = parseInt(document.getElementById('numTypes').value);
+  const expenseTypes = [];
+  const expenses = Array.from({ length: individuals }, () => []);
+
+  for (let i = 0; i < types; i++) {
+    const typeName = document.getElementById(`type-${i}`).value || `Type ${i + 1}`;
+    expenseTypes.push(typeName);
+    for (let j = 0; j < individuals; j++) {
+      const value = parseFloat(document.getElementById(`amount-${i}-${j}`).value) || 0;
+      expenses[j][i] = value;
+    }
+  }
+
+  generateCharts({ numIndividuals: individuals, numTypes: types, types: expenseTypes, expenses });
+}
+
+function generateCharts(data) {
+  const individuals = data.numIndividuals;
+  const expenseTypes = data.types;
+  const expenses = data.expenses;
+
+  const individualLabels = Array.from({ length: individuals }, (_, i) => `Individual ${i + 1}`);
+  const expensesPerIndividual = expenses.map(row => row.reduce((a, b) => a + b, 0));
+  const expensesPerType = expenseTypes.map((_, col) => expenses.reduce((sum, row) => sum + row[col], 0));
+  const avgPerType = expensesPerType.map(val => val / individuals);
+
+  if (individualChart) individualChart.destroy();
+  if (typeChart) typeChart.destroy();
+  if (stackedChart) stackedChart.destroy();
+  if (averageChart) averageChart.destroy();
+
+  individualChart = new Chart(document.getElementById("individualChart"), {
+    type: 'bar',
+    data: {
+      labels: individualLabels,
+      datasets: [{
+        label: 'Total Expenses',
+        data: expensesPerIndividual,
+        backgroundColor: individualLabels.map((_, i) => `hsl(${i * 70}, 70%, 50%)`)
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false }, datalabels: { color: '#fff' } },
+      scales: { x: { ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' } } }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  typeChart = new Chart(document.getElementById("typeChart"), {
+    type: 'doughnut',
+    data: {
+      labels: expenseTypes,
+      datasets: [{
+        data: expensesPerType,
+        backgroundColor: expenseTypes.map((_, i) => `hsl(${i * 36}, 70%, 50%)`)
+      }]
+    },
+    options: { plugins: { legend: { labels: { color: '#fff' } }, datalabels: { color: '#fff', formatter: v => `$${v}` } } },
+    plugins: [ChartDataLabels]
+  });
+
+  stackedChart = new Chart(document.getElementById("stackedChart"), {
+    type: 'bar',
+    data: {
+      labels: expenseTypes,
+      datasets: expenses.map((data, i) => ({
+        label: individualLabels[i],
+        data,
+        backgroundColor: `hsl(${i * 70}, 70%, 50%)`
+      }))
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#fff' } }, datalabels: { color: '#fff' } },
+      scales: { x: { stacked: true, ticks: { color: '#ccc' } }, y: { stacked: true, ticks: { color: '#ccc' } } }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  averageChart = new Chart(document.getElementById("averageChart"), {
+    type: 'line',
+    data: {
+      labels: expenseTypes,
+      datasets: [{
+        label: 'Average Expense',
+        data: avgPerType,
+        fill: true,
+        borderColor: '#00ccff',
+        backgroundColor: 'rgba(0,204,255,0.2)',
+        pointBackgroundColor: '#00ccff',
+        tension: 0.4
+      }]
+    },
+    options: {
+      plugins: { legend: { labels: { color: '#fff' } }, datalabels: { color: '#fff', align: 'top', anchor: 'end', formatter: v => `$${v.toFixed(2)}` } },
+      scales: { x: { ticks: { color: '#ccc' } }, y: { ticks: { color: '#ccc' }, beginAtZero: true } }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+</script>
+
+</body>
+</html>
